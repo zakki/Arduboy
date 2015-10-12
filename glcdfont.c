@@ -4,6 +4,11 @@
 #ifndef FONT5X7_H
 #define FONT5X7_H
 
+#define FONT_WIDTH 5
+#define FONT_HEIGHT 7
+#define FONT_OFFSET_X 6
+#define FONT_OFFSET_Y 8
+
 // standard ascii 5x7 font
 const static unsigned char  font[] PROGMEM =
 {

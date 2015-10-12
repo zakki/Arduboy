@@ -1,6 +1,9 @@
 #include "Arduboy.h"
-#include "glcdfont.c"
+//#include "glcdfont.c"
+#include "misaki_gothic.c"
 
+
+uint16_t firstWChar;
 
 Arduboy::Arduboy() {
   frameRate = 60;
@@ -14,6 +17,7 @@ Arduboy::Arduboy() {
   cursor_x = 0;
   cursor_y = 0;
   textsize = 1;
+  firstWChar = 0;
 }
 
 void Arduboy::start()
@@ -597,26 +601,85 @@ void Arduboy::drawChar
 
   if ((x >= WIDTH) ||         // Clip right
     (y >= HEIGHT) ||        // Clip bottom
-    ((x + 5 * size - 1) < 0) ||   // Clip left
-    ((y + 8 * size - 1) < 0)    // Clip top
+    ((x + FONT_OFFSET_X * size - 1) < 0) ||   // Clip left
+    ((y + FONT_OFFSET_Y * size - 1) < 0)    // Clip top
   )
   {
     return;
   }
 
-  for (int8_t i=0; i<6; i++ )
+  for (int8_t i=0; i<FONT_OFFSET_X; i++ )
   {
     uint8_t line;
-    if (i == 5)
+    if (i >= FONT_WIDTH)
     {
       line = 0x0;
     }
     else
     {
-      line = pgm_read_byte(font+(c*5)+i);
+      line = pgm_read_byte(font+(c*FONT_WIDTH)+i);
     }
 
-    for (int8_t j = 0; j<8; j++)
+    for (int8_t j = 0; j<FONT_HEIGHT; j++)
+    {
+      if (line & 0x1)
+      {
+        if (size == 1) // default size
+        {
+          drawPixel(x+i, y+j, color);
+        }
+        else  // big size
+        {
+          fillRect(x+(i*size), y+(j*size), size, size, color);
+        }
+      }
+      else if (bg != color)
+      {
+        if (size == 1) // default size
+        {
+          drawPixel(x+i, y+j, bg);
+        }
+        else
+        {  // big size
+          fillRect(x+i*size, y+j*size, size, size, bg);
+        }
+      }
+
+      line >>= 1;
+    }
+  }
+}
+
+
+void Arduboy::drawWChar
+(int16_t x, int16_t y, uint16_t c, uint8_t color, uint8_t bg, uint8_t size)
+{
+  //FIXME skip zone 9..15
+  if (c >= 15 * 94)
+    c -= 7 * 94;
+
+  if ((x >= WIDTH) ||         // Clip right
+    (y >= HEIGHT) ||        // Clip bottom
+    ((x + FONT2_OFFSET_X * size - 1) < 0) ||   // Clip left
+    ((y + FONT2_OFFSET_Y * size - 1) < 0)    // Clip top
+  )
+  {
+    return;
+  }
+
+  for (int8_t i=0; i<=FONT2_OFFSET_X; i++ )
+  {
+    uint8_t line;
+    if (i >= FONT2_WIDTH)
+    {
+      line = 0x0;
+    }
+    else
+    {
+      line = pgm_read_byte(font2+(c*FONT2_WIDTH)+i);
+    }
+
+    for (int8_t j = 0; j<FONT2_HEIGHT; j++)
     {
       if (line & 0x1)
       {
@@ -666,22 +729,42 @@ size_t Arduboy::write(uint8_t c)
 {
   if (c == '\n')
   {
-    cursor_y += textsize*8;
+    cursor_y += textsize*FONT_OFFSET_Y;
     cursor_x = 0;
   }
   else if (c == '\r')
   {
     // skip em
   }
+  else if (c > 0x80)
+  {
+	  if (firstWChar == 0)
+	  {
+		  firstWChar = c;
+	  }
+	  else
+	  {
+		  uint16_t w = (firstWChar - 0xA1) * 94 + (c - 0xA1);
+		  drawWChar(cursor_x, cursor_y, w, 1, 0, textsize);
+		  cursor_x += textsize*FONT2_OFFSET_X;
+		  if (wrap && (cursor_x > (WIDTH - textsize*FONT2_OFFSET_X)))
+		  {
+			  cursor_y += textsize*FONT2_OFFSET_Y;
+			  cursor_x = 0;
+		  }
+		  firstWChar = 0;
+	  }
+  }
   else
   {
     drawChar(cursor_x, cursor_y, c, 1, 0, textsize);
-    cursor_x += textsize*6;
-    if (wrap && (cursor_x > (WIDTH - textsize*6)))
+    cursor_x += textsize*FONT_OFFSET_X;
+    if (wrap && (cursor_x > (WIDTH - textsize*FONT_OFFSET_X)))
     {
-      cursor_y += textsize*8;
+      cursor_y += textsize*FONT_OFFSET_Y;
       cursor_x = 0;
     }
+	firstWChar = 0;
   }
 }
 

@@ -59,6 +59,7 @@ public:
   void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint8_t color);
   void drawSlowXYBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint8_t color);
   void drawChar(int16_t x, int16_t y, unsigned char c, uint8_t color, uint8_t bg, uint8_t size);
+  void drawWChar(int16_t x, int16_t y, uint16_t c, uint8_t color, uint8_t bg, uint8_t size);
   void setCursor(int16_t x, int16_t y);
   void setTextSize(uint8_t s);
   void setTextWrap(boolean w);
