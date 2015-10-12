@@ -1,6 +1,5 @@
-
 #define NSUBSAMPLES  2
-#define NAO_SAMPLES  4
+#define NAO_SAMPLES  2
 
 struct Vec {
   float x;
