@@ -16,6 +16,7 @@ unsigned long lTime;
 Sphere spheres[3];
 Plane  plane;
 
+unsigned long lastSec;
 int cur_x;
 //float fimg[WIDTH * HEIGHT];
 float imgerror[HEIGHT];
@@ -38,9 +39,10 @@ static void vnormalize(Vec *c)
   float length = sqrt(vdot((*c), (*c)));
 
   if (fabs(length) > 1.0e-17) {
-    c->x /= length;
-    c->y /= length;
-    c->z /= length;
+    float s = 1.0 / length;
+    c->x *= s;
+    c->y *= s;
+    c->z *= s;
   }
 }
 
@@ -243,6 +245,7 @@ void setup() {
 
   delay(500);
   lTime = millis();
+  lastSec = 0;
   cur_x = 0;
   display.clearDisplay();
 }
@@ -254,9 +257,11 @@ void loop() {
   x = cur_x;
   float scale = min(1.0 / (WIDTH / 2.0), 1.0 / (HEIGHT / 2.0));
   {
+    display.drawFastVLine(x, 0, HEIGHT, BLACK);
     for (y = 0; y < HEIGHT; y++) {
-      display.drawPixel(x, y, WHITE);
-      display.display();
+      // display.drawPixel(x, y, WHITE);
+	  if ((y & 0x7) == 0)
+        display.display();
       float fimg = 0;
 
       for (v = 0; v < NSUBSAMPLES; v++) {
@@ -309,26 +314,29 @@ void loop() {
         imgerror[y - 1] += err * 3;
       if (y + 1 < HEIGHT)
         imgerror[y + 1] += err * 7;
-      display.fillRect(64, 0, 127, 8, BLACK); // Box border
-      display.setCursor(64, 0);
-      display.print(fimg);
-      display.display();
+      // display.fillRect(64, 0, 127, 8, BLACK);
+      // display.setCursor(64, 0);
+      // display.print(fimg);
+	  // display.display();
     }
   }
 
   cur_x++;
+  unsigned long now = millis();
   if (cur_x >= WIDTH) {
     cur_x = 0;
 
-    display.clearDisplay();
+    // display.clearDisplay();
+	lastSec = (now - lTime) / 1000;
     lTime = millis();
   } else {
-    unsigned long now = millis();
     unsigned long t = (now - lTime) / 1000;
-    display.fillRect(0, 0, 64, 8, BLACK); // Box border
+    display.fillRect(0, 0, 64, 8, BLACK);
     display.setCursor(0, 0);
     display.print(t);
-    display.print("sec");
+    display.print("sec(");
+    display.print(lastSec);
+    display.print(")");
     display.display();
   }
 }
